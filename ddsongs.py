@@ -2,7 +2,8 @@ import argparse
 import os
 import prettytable
 
-# Make a class here for ddsongs, with the base directory as an argument.
+# Make a class here for ddsongs, with the base directory and the
+# force_yes variable as arguments.
 
 
 # Parse the Arguments
@@ -12,12 +13,12 @@ def args():
 		description="Deletes duplicate songs from a directory recursively.")
 
 	parser.add_argument("-f",
-						"--force_yes",
+						"--force-yes",
 						help='Do not prompt before deleting a song',
 						required=False,
 						action="store_true")
 	parser.add_argument("-d",
-						"--base_dir",
+						"--base-dir",
 						help='The music directory in which the script will delete duplicate songs',
 						required=False,
 						default=".")
@@ -25,6 +26,8 @@ def args():
 						help='Delete Dropbox conflicted copies',
 						required=False,
 						action="store_true")
+
+	return vars(parser.parse_args())
 
 # Main Function
 def main():
@@ -35,6 +38,11 @@ def main():
 	force_yes = False
 	base_dir = "."
 	confirm_answer = "Yes"
+
+	# Changing the force_yes variable if flag was set
+	if user_args['force_yes']:
+		force_yes = True
+		print "****Force yes is on****"
 
 	# Confirm Execution
 	print "This script recursively deletes duplicate songs from the "
@@ -53,7 +61,5 @@ def main():
 	# Creating a Ddsongs object
 
 
-
-
-if __name__ = "__main__":
+if __name__ == "__main__":
 	main()
