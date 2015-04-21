@@ -35,7 +35,13 @@ def args():
 						required=False,
 						action="store_true")
 
-	return vars(parser.parse_args())
+	args = parser.parse_args()
+
+	# If base dir has a trailing slash, delete it
+	if args.base_dir[-1] == "/":
+		args.base_dir = args.base_dir.split("/")[0]
+
+	return vars(args)
 
 def deleteduplicate(user_args):
 	"""Delete duplicate songs recursively starting from a base directory.
@@ -58,6 +64,9 @@ def deleteduplicate(user_args):
 			#again to search for duplicates.
 			for dirpath_current, dirnames_current, filenames_current in walk(user_args['base_dir']):
 				for song_current in filenames_current:
+					# Print verbose message
+					if user_args['verbose']:
+						print "Comparing " + "".join([dirpath_origin,"/",song_origin]) + " with " + "".join([dirpath_current,"/",song_current])
 					#If iterating through same song, then skip.
 					if dirpath_origin == dirpath_current and song_origin == song_current:
 						continue
@@ -67,7 +76,7 @@ def deleteduplicate(user_args):
 						if user_args['verbose']:
 							print "Found duplicates. " + "".join([dirpath_current,"/",song_current]) + " and " + "".join([dirpath_origin,"/",song_origin])
 						#Removing song
-						remove_song(user_args['force_yes'], "".join([dirpath_origin,song_origin]), user_args['verbose'])
+						remove_song(user_args['force_yes'], "".join([dirpath_origin,"/",song_origin]), user_args['verbose'])
 
 	print "Done!"
 
