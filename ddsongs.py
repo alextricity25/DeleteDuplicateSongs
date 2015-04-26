@@ -2,12 +2,19 @@ import argparse
 import os
 from os import walk
 from os import remove
+from os import path
 import sys
 import re
 
-# Make a class here for ddsongs, with the base directory and the
-# force_yes variable as arguments.
+# Variables
 
+## Data structure that acts as a directory map of the '''base_dir'''
+## along with providing some relevant information. 
+DIR_ATLAS = {}
+
+## A list of all the songs in the directory structure with their 
+## path names relative to '''base_dir'''
+SONGS_LIST = []
 
 # Parse the Arguments
 def args():
@@ -43,6 +50,24 @@ def args():
 
 	return vars(args)
 
+def build_atlas(user_args):
+	"""Build a directory structure starting from '''base_dir''', while also
+	providing relevant information such as how many times a song appears in 
+	the directory structure.
+
+	:param user_args: The user argumnets
+	:type user_args: ```dict```
+	"""
+
+	for dirpath, dirnames, filenames in walk(user_args['base_dir']):
+		files_dict = {}
+		for filename in filenames:
+			files_dict[filename] = {'count': 1}
+			song_path = "".join([dirpath,"/",filename])
+			SONGS_LIST.append(song_path)
+		DIR_ATLAS[dirpath] = files_dict
+
+
 def deleteduplicate(user_args):
 	"""Delete duplicate songs recursively starting from a base directory.
 	The algorithm deletes the song in the top directory, preserving
@@ -56,27 +81,27 @@ def deleteduplicate(user_args):
 	if user_args['verbose']:
 		print "Base directory is " + user_args['base_dir']
 
-	#Iterate through each directory, starting with ```base_dir```.
-	for dirpath_origin, dirnames_orgin, filenames_origin in walk(user_args['base_dir']):
-		#Iterate through each song in the directory.
-		for song_origin in filenames_origin:
-			#For each song, iterate through the directory tree structure
-			#again to search for duplicates.
-			for dirpath_current, dirnames_current, filenames_current in walk(user_args['base_dir']):
-				for song_current in filenames_current:
-					# Print verbose message
+	for song_origin in SONGS_LIST:
+		#print path.dirname(song_origin)
+		#print path.basename(song_origin)
+		for song_current in SONGS_LIST:
+			if song_origin == song_current:
+				continue
+			elif path.basename(song_origin) == path.basename(song_current):
+				if user_args['verbose']:
+					print "-------------------------------------------"
+					print "Comparing " + song_origin + " and " + song_current
+					print ""
+				if is_deeper(path.dirname(song_current), path.dirname(song_origin)):
 					if user_args['verbose']:
-						print "Comparing " + "".join([dirpath_origin,"/",song_origin]) + " with " + "".join([dirpath_current,"/",song_current])
-					#If iterating through same song, then skip.
-					if dirpath_origin == dirpath_current and song_origin == song_current:
-						continue
-					#If songname is the same, find out which one is in the deepest directory
-					if is_deeper(dirpath_current, dirpath_origin) and song_current == song_origin:
-						#Print verbose message
-						if user_args['verbose']:
-							print "Found duplicates. " + "".join([dirpath_current,"/",song_current]) + " and " + "".join([dirpath_origin,"/",song_origin])
-						#Removing song
-						remove_song(user_args['force_yes'], "".join([dirpath_origin,"/",song_origin]), user_args['verbose'])
+						print "Found duplicates. " + song_origin + " and " + song_current
+						print ""
+					#Removing Song
+					remove_song(user_args['force_yes'], song_origin, user_args['verbose']) 
+				else:
+					print "-------------------------------------------"
+					print ""
+
 
 	print "Done!"
 
@@ -106,21 +131,28 @@ def remove_song(force_yes, song_full_path, verbose):
 	:type song_full_path: ```str```
 	"""
 
-	try:
+	if path.isfile(song_full_path):
 		if force_yes:
 			remove(song_full_path)
 			print "Deleted " + song_full_path
+			print "-------------------------------------------"
+			print ""
 		else:
 			print "Are you sure you want to delete " + song_full_path
 			answer = raw_input("(Yes/No)")
 			if answer.lower() == 'yes':
 				remove(song_full_path)
 				print "Deleted " + song_full_path
+				print "-------------------------------------------"
+				print ""
 			else:
 				print "Song not deleted, continuing..."
-	except:
+				print "-------------------------------------------"
+	else:
 		if verbose:
-			print "File must have already been deleted on surface directory, this means that you might have this song twice in different directories. Continuing.."
+			print "File must have already been deleted on surface directory, this means that you might have this song twice in different directories. Continuing...."
+			print "-------------------------------------------"
+			print ""
 
 
 
@@ -148,6 +180,7 @@ def main():
 	# Acknowleding the confirmation
 	if confirm_answer == "yes":
 		print "You said yes, continuing with the process...."
+		build_atlas(user_args)
 		deleteduplicate(user_args)
 	else:
 		print "You did not enter yes, the script will exit"
