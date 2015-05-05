@@ -52,7 +52,7 @@ def args():
 
 def build_atlas(user_args):
 	"""Build a directory structure starting from '''base_dir''', while also
-	providing relevant information such as how many times a song appears in 
+	providing relevant information such as how many times a song appears in
 	the directory structure.
 
 	:param user_args: The user argumnets
@@ -71,11 +71,15 @@ def build_atlas(user_args):
 def deleteduplicate(user_args):
 	"""Delete duplicate songs recursively starting from a base directory.
 	The algorithm deletes the song in the top directory, preserving
-	the one in the deepest directory. 
+	the one in the deepest directory.
 
 	:param user_args: The user arguments
 	:type user_args: ``dict``
 	"""
+
+	#Local variables.
+	##Count the number of songs deleted.
+	songs_deleted = 0
 
 	#Print verbose message for base_dir
 	if user_args['verbose']:
@@ -87,6 +91,8 @@ def deleteduplicate(user_args):
 		for song_current in SONGS_LIST:
 			if song_origin == song_current:
 				continue
+			elif not re.search('^.*m[p4][a3]$', path.basename(song_origin)):
+				continue
 			elif path.basename(song_origin) == path.basename(song_current):
 				if user_args['verbose']:
 					print "-------------------------------------------"
@@ -94,16 +100,20 @@ def deleteduplicate(user_args):
 					print ""
 				if is_deeper(path.dirname(song_current), path.dirname(song_origin)):
 					if user_args['verbose']:
-						print "Found duplicates. " + song_origin + " and " + song_current
+						print "Found duplicates. " + song_origin + " and "
+						print song_current
 						print ""
 					#Removing Song
-					remove_song(user_args['force_yes'], song_origin, user_args['verbose']) 
+					remove_song(user_args['force_yes'], song_origin, user_args['verbose'])
+					songs_deleted += 1
 				else:
 					print "-------------------------------------------"
 					print ""
 
 
+	print "Songs Deleted: %d" % (songs_deleted)
 	print "Done!"
+
 
 
 def is_deeper(dirname1, dirname2):
@@ -161,14 +171,7 @@ def main():
 	# Parse user arguments
 	user_args = args()
 
-	# Variables
-	force_yes = False
 	confirm_answer = "Yes"
-
-	# Changing the force_yes variable if flag was set
-	if user_args['force_yes']:
-		force_yes = True
-		print "****Force yes is on****"
 
 	# Confirm Execution
 	print "This script recursively deletes duplicate songs from the "
